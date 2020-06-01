@@ -1,12 +1,23 @@
 module BadgeRewarder
-  YEARS = { 1 => "one", 2 => "two", 3 => "three", 4 => "four", 5 => "five", 6 => "six", 7 => "seven", 8 => "eight", 9 => "nine", 10 => "ten" }.freeze
+  YEARS = {
+    1 => "one",
+    2 => "two",
+    3 => "three",
+    4 => "four",
+    5 => "five",
+    6 => "six",
+    7 => "seven",
+    8 => "eight",
+    9 => "nine",
+    10 => "ten"
+  }.freeze
   REPOSITORIES = ["thepracticaldev/dev.to", "thepracticaldev/DEV-ios", "thepracticaldev/DEV-Android"].freeze
 
   def self.award_yearly_club_badges
     (1..3).each do |i|
       message = "Happy #{ApplicationConfig['COMMUNITY_NAME']} birthday! Can you believe it's been #{i} #{'year'.pluralize(i)} already?!"
       badge = Badge.find_by!(slug: "#{YEARS[i]}-year-club")
-      User.where("created_at < ? AND created_at > ?", i.year.ago, i.year.ago - 2.days).find_each do |user|
+      User.where(created_at: 1.year.ago..1.year.ago - 2.days).find_each do |user|
         achievement = BadgeAchievement.create(
           user_id: user.id,
           badge_id: badge.id,
@@ -21,7 +32,7 @@ module BadgeRewarder
     # ID 3 is the proper ID in prod. We should change in future to ENV var.
     badge_id = Badge.find_by(slug: "beloved-comment")&.id || 3
     Comment.where("public_reactions_count > ?", 24).find_each do |comment|
-      message = "You're famous! [This is the comment](https://#{ApplicationConfig['APP_DOMAIN']}#{comment.path}) for which you are being recognized. 😄"
+      message = "You're famous! [This is the comment](#{URL.comment(comment)}) for which you are being recognized. 😄"
       achievement = BadgeAchievement.create(
         user_id: comment.user_id,
         badge_id: badge_id,
@@ -56,7 +67,7 @@ module BadgeRewarder
         award_badges(
           [winning_article.user.username],
           tag.badge.slug,
-          "Congratulations on posting the most beloved [##{tag.name}](#{ApplicationConfig['APP_PROTOCOL'] + ApplicationConfig['APP_DOMAIN']}/t/#{tag.name}) post from the past seven days! Your winning post was [#{winning_article.title}](#{ApplicationConfig['APP_PROTOCOL'] + ApplicationConfig['APP_DOMAIN'] + winning_article.path}). (You can only win once per badge-eligible tag)",
+          "Congratulations on posting the most beloved [##{tag.name}](#{URL.tag(tag)}) post from the past seven days! Your winning post was [#{winning_article.title}](#{URL.article(winning_article)}). (You can only win once per badge-eligible tag)",
         )
       end
     end
